@@ -1,0 +1,25 @@
+meta {
+  name: POST Main
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/main
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "bob",
+    "children": [
+      {
+        "name": "StarkO"
+      },
+      {
+        "name": "StrongU"
+      }
+    ]
+  }
+}

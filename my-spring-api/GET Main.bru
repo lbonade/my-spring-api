@@ -1,0 +1,19 @@
+meta {
+  name: GET Main
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:8080/main/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 75a77db6-98bd-4a00-95f0-f40d9bce1b15
+}
+
+headers {
+  ~If-None-Match: "2"
+}

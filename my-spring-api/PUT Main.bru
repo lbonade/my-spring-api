@@ -1,0 +1,39 @@
+meta {
+  name: PUT Main
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://localhost:8080/main/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: b06f7e34-a68f-4c1a-af2b-2dd757d52490
+}
+
+headers {
+  ETag: "1"
+}
+
+body:json {
+  {
+    "id": "b06f7e34-a68f-4c1a-af2b-2dd757d52490",
+    "name": "bobyb",
+    "lastModified": null,
+    "children": [
+      {
+        "id": 2,
+        "name": "Strong",
+        "lastModified": null
+      },
+      {
+        "id": 1,
+        "name": "StakO",
+        "lastModified": null
+      }
+    ]
+  }
+}
