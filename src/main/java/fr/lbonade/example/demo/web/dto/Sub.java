@@ -6,21 +6,25 @@ import lombok.extern.jackson.Jacksonized;
 import java.time.Instant;
 import java.util.List;
 
-
 @Data
-@EqualsAndHashCode
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Jacksonized
-public class MainDto {
+public class Sub {
 
-    private String id;
+    private int id;
     private String name;
     private Instant lastModified;
     private Instant created;
 
-    private List<SubDto> children;
 
+    private List<SubSub> children;
+
+    public List<SubSub> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<SubSub> children) {
+        this.children = children;
+    }
 
 }

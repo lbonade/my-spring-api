@@ -1,13 +1,16 @@
 package fr.lbonade.example.demo.web.controller;
 
 import fr.lbonade.example.demo.business.entity.MainEntity;
-import fr.lbonade.example.demo.business.entity.MainSummaryEntity;
 import fr.lbonade.example.demo.business.entity.VersionOnly;
 import fr.lbonade.example.demo.infra.repository.JpaMainEntityRepository;
 import fr.lbonade.example.demo.mappers.Mapper;
 import fr.lbonade.example.demo.mappers.MapperImpl;
-import fr.lbonade.example.demo.web.dto.MainDto;
-import org.springframework.data.domain.Pageable;
+import fr.lbonade.example.demo.web.dto.Main;
+import fr.lbonade.example.demo.web.dto.MainSummary;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.EntityLinks;
+import org.springframework.hateoas.server.ExposesResourceFor;
+import org.springframework.hateoas.server.TypedEntityLinks;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,14 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
+@ExposesResourceFor(Main.class)
 @RestController
 @RequestMapping( path = "main", produces = MediaType.APPLICATION_JSON_VALUE)
 public class MainControler {
@@ -32,23 +33,18 @@ public class MainControler {
 
     private final Mapper mapper;
 
+    private final TypedEntityLinks<MainSummary> links;
 
-    public MainControler(JpaMainEntityRepository mainRepository) {
+
+    public MainControler(JpaMainEntityRepository mainRepository, EntityLinks entityLinks) {
         this.mainRepository = mainRepository;
+        links = entityLinks.forType(MainSummary::getId);
         mapper = new MapperImpl();
-    }
-
-    @GetMapping()
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<MainSummaryEntity>> all() {
-        return ResponseEntity.ok(
-                StreamSupport.stream(mainRepository.findAllProjectedOnEntityLightBy(Pageable.unpaged()).spliterator(), false)
-                        .toList());
     }
 
     @GetMapping( path = "/{id}")
     @Transactional(readOnly = true)
-    public ResponseEntity<MainDto> get(WebRequest request, @PathVariable(name = "id", required = true) String id) {
+    public ResponseEntity<Main> get(WebRequest request, @PathVariable(name = "id", required = true) String id) {
 
         Optional<String> maybeVersion = mainRepository.findVersionById(id)
                 .map(VersionOnly::version)
@@ -66,9 +62,13 @@ public class MainControler {
         Optional<MainEntity> maybeEntity = mainRepository.findById(id);
         return maybeEntity
                 .map(ent ->
-                        ResponseEntity.ok()
-                                .eTag(Long.toString(ent.getVersion()))
-                                .body(mapper.toDto(ent)))
+                        {
+                            Main dto = mapper.mainToDto(ent);
+                            dto.add(links.linkToItemResource(dto));
+                            return ResponseEntity.ok()
+                                    .eTag(Long.toString(ent.getVersion()))
+                                    .body(dto);
+                        })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -94,23 +94,24 @@ public class MainControler {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<MainDto> post(@RequestBody MainDto mainDto) {
+    public ResponseEntity<Main> post(@RequestBody Main mainDto) {
         mainDto.setId(UUID.randomUUID().toString());
-        MainEntity mainEntity = mapper.ToEntity(mainDto);
+        MainEntity mainEntity = mapper.mainToEntity(mainDto);
         MainEntity ent = mainRepository.save(mainEntity);
 
-        return ResponseEntity.created(
-                        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                                .buildAndExpand(ent.getId()).toUri())
+        Main dto = mapper.mainToDto(ent);
+        Link link = links.linkToItemResource(dto);
+        dto.add(link);
+        return ResponseEntity.created(link.toUri())
                 .eTag(Long.toString(ent.getVersion()))
-                .body(mapper.toDto(ent));
+                .body(dto);
     }
 
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ResponseEntity<MainDto> put(
+    public ResponseEntity<Main> put(
             @PathVariable("id") String id,
-            @RequestBody MainDto mainDto,
+            @RequestBody Main mainDto,
             @RequestHeader(HttpHeaders.ETAG) String eTag) {
         // Check Id tare identical //FIXEME
         if (mainDto.getId() == null || !Objects.equals(mainDto.getId(),id)) {
@@ -133,13 +134,16 @@ public class MainControler {
 
         MainEntity previous = mainRepository.findById(id).orElseThrow();
 
-        mapper.updateEntityEntityFromEntity(mainDto, previous);
+        mapper.updateMainEntityFromDto(mainDto, previous);
         MainEntity updated = mainRepository.saveAndFlush(previous);
         if (Objects.equals(updated.getVersion(), maybeVersion.orElse(""))) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(Long.toString(updated.getVersion())).build();
         }
+
+        Main dto = mapper.mainToDto(updated);
+        dto.add(links.linkToItemResource(dto));
         return ResponseEntity.status(HttpStatus.OK)
                         .eTag(Long.toString(updated.getVersion()))
-                        .body(mapper.toDto(updated));
+                        .body(dto);
     }
 }

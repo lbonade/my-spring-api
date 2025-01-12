@@ -9,14 +9,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
-
 @Data
 @EqualsAndHashCode
-@Entity(name = "sub-entity" )
-@Table(name = "sub-entity")
+@Entity(name = "sub-sub-entity" )
+@Table(name = "sub-sub-entity")
 @EntityListeners(AuditingEntityListener.class)
-public class SubEntityEntity {
-
+public class SubSubEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
@@ -30,6 +28,7 @@ public class SubEntityEntity {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entity-id", updatable = false, nullable = false)
-    private transient MainEntity parent;
+    @JoinColumn(name = "sub-entity-id", updatable = false, nullable = false)
+    private transient SubEntity parent;
+
 }

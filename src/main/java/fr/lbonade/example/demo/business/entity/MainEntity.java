@@ -34,6 +34,6 @@ public class MainEntity {
 
     @OneToMany(orphanRemoval = true, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "entity-id")
-    private List<SubEntityEntity> children;
+    private List<SubEntity> children;
 
 }

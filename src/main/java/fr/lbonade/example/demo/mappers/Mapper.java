@@ -2,10 +2,11 @@ package fr.lbonade.example.demo.mappers;
 
 import fr.lbonade.example.demo.business.entity.MainEntity;
 import fr.lbonade.example.demo.business.entity.MainSummaryEntity;
-import fr.lbonade.example.demo.business.entity.SubEntityEntity;
-import fr.lbonade.example.demo.web.dto.MainDto;
-import fr.lbonade.example.demo.web.dto.MainSummaryDto;
-import fr.lbonade.example.demo.web.dto.SubDto;
+import fr.lbonade.example.demo.business.entity.SubEntity;
+import fr.lbonade.example.demo.business.entity.SubSubEntity;
+import fr.lbonade.example.demo.web.dto.*;
+import fr.lbonade.example.demo.web.dto.Main;
+import fr.lbonade.example.demo.web.dto.MainSummary;
 import org.mapstruct.*;
 
 import java.util.List;
@@ -16,29 +17,42 @@ public interface Mapper {
 
 
     @Mapping(target = ".", source = ".")
-    MainSummaryDto toDto(MainSummaryEntity entity);
+    MainSummary mainSummaryToDto(MainSummaryEntity entity);
 
     @Mapping(source = ".", target = ".")
-    MainDto toDto(MainEntity dto);
+    Main mainToDto(MainEntity dto);
 
     @Mapping(source = ".", target = ".")
-    SubDto toDto(SubEntityEntity subEntity);
+    Sub subToDto(SubEntity subEntity);
+
+    @Mapping(source = ".", target = ".")
+    SubSub subSubToDto(SubSubEntity subEntity);
 
     @Mapping(target = ".", source = ".")
-    @Mapping(target = "children", source = "children", qualifiedByName = "subEntityToDtoList")
-    void updateEntityEntityFromEntity(MainDto mainDto, @MappingTarget MainEntity mainEntity);
+    @Mapping(target = "children", source = "children", qualifiedByName = "subToEntityList")
+    void updateMainEntityFromDto(Main mainDto, @MappingTarget MainEntity mainEntity);
+
 
     @Mapping(target = ".", source = ".")
-    @Mapping(target = "children", source = "children", qualifiedByName = "subEntityToDtoList")
-    MainEntity ToEntity(MainDto mainDto);
+    @Mapping(target = "children", source = "children", qualifiedByName = "subToEntityList")
+    MainEntity mainToEntity(Main mainDto);
 
-    @IterableMapping(qualifiedByName = "subEntityToSubEntityEntity")
-    @Named("subEntityToDtoList")
-    List<SubEntityEntity> toEntityList(List<SubDto> children);
+    @Named("subToEntityList")
+    @IterableMapping(qualifiedByName = "subToEntity")
+    List<SubEntity> subToEntityList(List<Sub> children);
 
+    @Named("subToEntity")
     @Mapping(target = ".", source = ".")
-    @Named("subEntityToSubEntityEntity")
-    SubEntityEntity toEntity(SubDto entity);
+    @Mapping(target = "children", source = "children", qualifiedByName = "subSubToEntityList")
+    SubEntity subToEntity(Sub entity);
+
+    @Named("subSubToEntityList")
+    @IterableMapping(qualifiedByName = "subSubToEntity")
+    List<SubSubEntity> subSubToEntityList(List<SubSub> children);
+
+    @Named("subSubToEntity")
+    @Mapping(target = ".", source = ".")
+    SubSubEntity subSubToEntity(SubSub entity);
 
     @AfterMapping
     default void setEntityEntity(@MappingTarget MainEntity mainEntity) {
